@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== AUTHENTICATION (better-auth) ====================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  role          Role     @default(ADMIN)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                   String    @id @default(cuid())
+  userId               String
+  providerId           String
+  accountId            String
+  password             String?
+  accessToken          String?
+  refreshToken         String?
+  idToken              String?
+  scope                String?
+  accessTokenExpiresAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// ==================== BARBER SHOP MODELS ====================
+
+model Barber {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  bio         String?
+  imageUrl    String?
+  specialties String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments Appointment[]
+  workSchedule WorkSchedule[]
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int // in minutes
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  customerName  String
+  customerEmail String
+  customerPhone String
+  date          DateTime
+  startTime     DateTime
+  endTime       DateTime
+  status        AppointmentStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  barber    Barber  @relation(fields: [barberId], references: [id])
+  barberId  String
+  service   Service @relation(fields: [serviceId], references: [id])
+  serviceId String
+
+  @@index([barberId, date])
+  @@index([date, status])
+}
+
+model WorkSchedule {
+  id        String  @id @default(cuid())
+  dayOfWeek Int // 0 = Sunday, 6 = Saturday
+  startTime String // "09:00"
+  endTime   String // "18:00"
+  isWorking Boolean @default(true)
+
+  barber   Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  barberId String
+
+  @@unique([barberId, dayOfWeek])
+}
+
+model ShopSettings {
+  id           String @id @default(cuid())
+  shopName     String
+  address      String
+  phone        String
+  email        String
+  openTime     String // "09:00"
+  closeTime    String // "20:00"
+  slotDuration Int    @default(30) // minutes
+  closedDays   Int[] // [0] for Sunday closed
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
