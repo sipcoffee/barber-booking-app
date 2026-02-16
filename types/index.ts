@@ -46,3 +46,15 @@ export type AppointmentStatus =
   | "CANCELLED"
   | "COMPLETED"
   | "NO_SHOW";
+
+export interface ShopSettings {
+  id: string;
+  shopName: string;
+  address: string;
+  phone: string;
+  email: string;
+  openTime: string;
+  closeTime: string;
+  slotDuration: number;
+  closedDays: number[];
+}

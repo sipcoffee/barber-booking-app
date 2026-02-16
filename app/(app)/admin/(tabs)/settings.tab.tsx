@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -19,12 +19,96 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Store, Clock, Mail, MapPin } from "lucide-react";
+import { Save, Store, Clock, Mail, Loader2 } from "lucide-react";
+import type { ShopSettings } from "@/types";
 
 export function SettingsTab() {
-  const handleSave = () => {
-    toast.success("Settings saved successfully");
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [shopName, setShopName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [openTime, setOpenTime] = useState("09:00");
+  const [closeTime, setCloseTime] = useState("20:00");
+  const [slotDuration, setSlotDuration] = useState("30");
+  const [closedDays, setClosedDays] = useState<number[]>([0]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch("/api/shop-settings");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      const data: ShopSettings = await response.json();
+      setSettings(data);
+      setShopName(data.shopName);
+      setPhone(data.phone);
+      setEmail(data.email);
+      setAddress(data.address);
+      setOpenTime(data.openTime);
+      setCloseTime(data.closeTime);
+      setSlotDuration(data.slotDuration.toString());
+      setClosedDays(data.closedDays);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      toast.error("Failed to load settings");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch("/api/shop-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopName,
+          phone,
+          email,
+          address,
+          openTime,
+          closeTime,
+          slotDuration: parseInt(slotDuration),
+          closedDays,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save settings");
+
+      const data: ShopSettings = await response.json();
+      setSettings(data);
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleClosedDay = (dayIndex: number) => {
+    setClosedDays((prev) =>
+      prev.includes(dayIndex)
+        ? prev.filter((d) => d !== dayIndex)
+        : [...prev, dayIndex]
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -43,22 +127,36 @@ export function SettingsTab() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="shopName">Shop Name</Label>
-              <Input id="shopName" defaultValue="BarberShop" />
+              <Input
+                id="shopName"
+                value={shopName}
+                onChange={(e) => setShopName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" defaultValue="(555) 123-4567" />
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" defaultValue="info@barbershop.com" />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="address">Address</Label>
             <Input
               id="address"
-              defaultValue="123 Main Street, Downtown, City 12345"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
             />
           </div>
         </CardContent>
@@ -79,13 +177,16 @@ export function SettingsTab() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="openTime">Opening Time</Label>
-              <Select defaultValue="09:00">
+              <Select value={openTime} onValueChange={setOpenTime}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: 13 }, (_, i) => i + 6).map((hour) => (
-                    <SelectItem key={hour} value={`${hour.toString().padStart(2, "0")}:00`}>
+                    <SelectItem
+                      key={hour}
+                      value={`${hour.toString().padStart(2, "0")}:00`}
+                    >
                       {hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`}
                     </SelectItem>
                   ))}
@@ -94,13 +195,16 @@ export function SettingsTab() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="closeTime">Closing Time</Label>
-              <Select defaultValue="20:00">
+              <Select value={closeTime} onValueChange={setCloseTime}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: 13 }, (_, i) => i + 12).map((hour) => (
-                    <SelectItem key={hour} value={`${hour.toString().padStart(2, "0")}:00`}>
+                    <SelectItem
+                      key={hour}
+                      value={`${hour.toString().padStart(2, "0")}:00`}
+                    >
                       {hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`}
                     </SelectItem>
                   ))}
@@ -110,7 +214,7 @@ export function SettingsTab() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="slotDuration">Appointment Slot Duration</Label>
-            <Select defaultValue="30">
+            <Select value={slotDuration} onValueChange={setSlotDuration}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue />
               </SelectTrigger>
@@ -129,9 +233,10 @@ export function SettingsTab() {
                 (day, index) => (
                   <Button
                     key={day}
-                    variant={index === 0 ? "default" : "outline"}
+                    variant={closedDays.includes(index) ? "default" : "outline"}
                     size="sm"
                     className="w-14"
+                    onClick={() => toggleClosedDay(index)}
                   >
                     {day}
                   </Button>
@@ -162,7 +267,8 @@ export function SettingsTab() {
             <Input
               id="notificationEmail"
               type="email"
-              defaultValue="bookings@barbershop.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
               Receive booking notifications at this email address
@@ -173,8 +279,12 @@ export function SettingsTab() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
           Save Settings
         </Button>
       </div>

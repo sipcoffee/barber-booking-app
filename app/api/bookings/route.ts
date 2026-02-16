@@ -9,15 +9,26 @@ export async function GET(request: Request) {
     const date = searchParams.get("date");
     const barberId = searchParams.get("barberId");
 
+    // Build date filter if provided
+    let dateFilter = {};
+    if (date) {
+      // Parse the date string and create start/end of day boundaries
+      const [year, month, day] = date.split("-").map(Number);
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+      dateFilter = {
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      };
+    }
+
     const appointments = await prisma.appointment.findMany({
       where: {
         ...(status && { status: status as any }),
-        ...(date && {
-          date: {
-            gte: new Date(date),
-            lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)),
-          },
-        }),
+        ...dateFilter,
         ...(barberId && { barberId }),
       },
       include: {

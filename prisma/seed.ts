@@ -1,8 +1,12 @@
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma";
 
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-});
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
@@ -27,7 +31,8 @@ async function main() {
       create: {
         id: "srv_beard_trim",
         name: "Beard Trim",
-        description: "Expert beard shaping and trimming to maintain your perfect look.",
+        description:
+          "Expert beard shaping and trimming to maintain your perfect look.",
         duration: 20,
         price: 15,
       },
@@ -38,7 +43,8 @@ async function main() {
       create: {
         id: "srv_haircut_beard",
         name: "Haircut & Beard",
-        description: "Complete grooming package with haircut and beard trim combo.",
+        description:
+          "Complete grooming package with haircut and beard trim combo.",
         duration: 45,
         price: 35,
       },
@@ -49,7 +55,8 @@ async function main() {
       create: {
         id: "srv_hot_towel",
         name: "Hot Towel Shave",
-        description: "Luxurious traditional hot towel shave for the smoothest finish.",
+        description:
+          "Luxurious traditional hot towel shave for the smoothest finish.",
         duration: 30,
         price: 30,
       },
@@ -60,7 +67,8 @@ async function main() {
       create: {
         id: "srv_kids_haircut",
         name: "Kids Haircut",
-        description: "Gentle and patient haircuts for children under 12 years old.",
+        description:
+          "Gentle and patient haircuts for children under 12 years old.",
         duration: 20,
         price: 18,
       },

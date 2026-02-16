@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -25,118 +26,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Mock data - replace with API calls
-const mockServices: Service[] = [
-  {
-    id: "1",
-    name: "Classic Haircut",
-    description: "Traditional haircut with precision cutting and styling",
-    duration: 30,
-    price: 25,
-    imageUrl: null,
-    isActive: true,
-  },
-  {
-    id: "2",
-    name: "Beard Trim",
-    description: "Expert beard shaping and trimming",
-    duration: 20,
-    price: 15,
-    imageUrl: null,
-    isActive: true,
-  },
-  {
-    id: "3",
-    name: "Haircut & Beard",
-    description: "Complete grooming package with haircut and beard trim combo",
-    duration: 45,
-    price: 35,
-    imageUrl: null,
-    isActive: true,
-  },
-  {
-    id: "4",
-    name: "Hot Towel Shave",
-    description: "Luxurious traditional hot towel shave",
-    duration: 30,
-    price: 30,
-    imageUrl: null,
-    isActive: true,
-  },
-  {
-    id: "5",
-    name: "Kids Haircut",
-    description: "Gentle haircuts for children under 12",
-    duration: 20,
-    price: 18,
-    imageUrl: null,
-    isActive: true,
-  },
-  {
-    id: "6",
-    name: "Premium Package",
-    description: "Full service including haircut, beard, hot towel, and styling",
-    duration: 60,
-    price: 55,
-    imageUrl: null,
-    isActive: true,
-  },
-];
-
-const mockBarbers: Barber[] = [
-  {
-    id: "1",
-    name: "James Wilson",
-    email: null,
-    phone: null,
-    bio: "15 years of experience",
-    imageUrl: null,
-    specialties: ["Classic Cuts", "Hot Towel Shave"],
-    isActive: true,
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    email: null,
-    phone: null,
-    bio: "Expert in modern fades",
-    imageUrl: null,
-    specialties: ["Fades", "Hair Design"],
-    isActive: true,
-  },
-  {
-    id: "3",
-    name: "David Rodriguez",
-    email: null,
-    phone: null,
-    bio: "Precision cuts specialist",
-    imageUrl: null,
-    specialties: ["Precision Cuts", "Kids Haircuts"],
-    isActive: true,
-  },
-];
-
-const mockTimeSlots: TimeSlot[] = [
-  { time: "9:00 AM", available: true },
-  { time: "9:30 AM", available: true },
-  { time: "10:00 AM", available: false },
-  { time: "10:30 AM", available: true },
-  { time: "11:00 AM", available: true },
-  { time: "11:30 AM", available: false },
-  { time: "12:00 PM", available: true },
-  { time: "12:30 PM", available: true },
-  { time: "1:00 PM", available: true },
-  { time: "1:30 PM", available: false },
-  { time: "2:00 PM", available: true },
-  { time: "2:30 PM", available: true },
-  { time: "3:00 PM", available: true },
-  { time: "3:30 PM", available: true },
-  { time: "4:00 PM", available: false },
-  { time: "4:30 PM", available: true },
-  { time: "5:00 PM", available: true },
-  { time: "5:30 PM", available: true },
-];
+import { format } from "date-fns";
 
 const steps = [
   { id: 1, name: "Service", description: "Choose your service" },
@@ -147,14 +37,25 @@ const steps = [
 ];
 
 export function BookingForm() {
+  const searchParams = useSearchParams();
+  const preselectedServiceId = searchParams.get("service");
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
+  // Data from API
+  const [services, setServices] = useState<Service[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [loadingBarbers, setLoadingBarbers] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      serviceId: "",
+      serviceId: preselectedServiceId || "",
       barberId: "",
       date: undefined,
       timeSlot: "",
@@ -166,12 +67,89 @@ export function BookingForm() {
   });
 
   const watchedValues = form.watch();
-  const selectedService = mockServices.find(
-    (s) => s.id === watchedValues.serviceId
-  );
-  const selectedBarber = mockBarbers.find(
-    (b) => b.id === watchedValues.barberId
-  );
+  const selectedService = services.find((s) => s.id === watchedValues.serviceId);
+  const selectedBarber = barbers.find((b) => b.id === watchedValues.barberId);
+
+  // Fetch services on mount
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const response = await fetch("/api/services");
+        if (response.ok) {
+          const data = await response.json();
+          setServices(data);
+        }
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        toast.error("Failed to load services");
+      } finally {
+        setLoadingServices(false);
+      }
+    }
+    fetchServices();
+  }, []);
+
+  // Fetch barbers on mount
+  useEffect(() => {
+    async function fetchBarbers() {
+      try {
+        const response = await fetch("/api/barbers");
+        if (response.ok) {
+          const data = await response.json();
+          setBarbers(data);
+        }
+      } catch (error) {
+        console.error("Error fetching barbers:", error);
+        toast.error("Failed to load barbers");
+      } finally {
+        setLoadingBarbers(false);
+      }
+    }
+    fetchBarbers();
+  }, []);
+
+  // Fetch available time slots when date or barber changes
+  const fetchTimeSlots = useCallback(async () => {
+    const date = watchedValues.date;
+    if (!date || !selectedService) return;
+
+    setLoadingSlots(true);
+    try {
+      const params = new URLSearchParams({
+        date: format(date, "yyyy-MM-dd"),
+        duration: selectedService.duration.toString(),
+      });
+      if (watchedValues.barberId) {
+        params.append("barberId", watchedValues.barberId);
+      }
+
+      const response = await fetch(`/api/available-slots?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTimeSlots(data.slots || []);
+        // Clear selected time if it's no longer available
+        if (watchedValues.timeSlot) {
+          const stillAvailable = data.slots?.find(
+            (s: TimeSlot) => s.time === watchedValues.timeSlot && s.available
+          );
+          if (!stillAvailable) {
+            form.setValue("timeSlot", "");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      toast.error("Failed to load available times");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, [watchedValues.date, watchedValues.barberId, watchedValues.timeSlot, selectedService, form]);
+
+  useEffect(() => {
+    if (watchedValues.date && selectedService) {
+      fetchTimeSlots();
+    }
+  }, [watchedValues.date, watchedValues.barberId, selectedService, fetchTimeSlots]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -209,16 +187,34 @@ export function BookingForm() {
   const onSubmit = async (data: BookingFormValues) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Booking data:", data);
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId: data.serviceId,
+          barberId: data.barberId || undefined,
+          date: data.date ? format(data.date, "yyyy-MM-dd") : undefined,
+          timeSlot: data.timeSlot,
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          customerPhone: data.customerPhone,
+          notes: data.notes,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to book appointment");
+      }
+
       setIsComplete(true);
       toast.success("Appointment booked successfully!", {
         description: "Check your email for confirmation details.",
       });
     } catch (error) {
+      console.error("Booking error:", error);
       toast.error("Failed to book appointment", {
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
       });
     } finally {
       setIsSubmitting(false);
@@ -252,6 +248,8 @@ export function BookingForm() {
       </Card>
     );
   }
+
+  const isLoading = loadingServices || loadingBarbers;
 
   return (
     <div className="space-y-8">
@@ -329,85 +327,95 @@ export function BookingForm() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Card>
             <CardContent className="p-6">
-              {/* Step Content */}
-              {currentStep === 1 && (
-                <ServiceSelector
-                  services={mockServices}
-                  selectedId={watchedValues.serviceId}
-                  onSelect={(id) => form.setValue("serviceId", id)}
-                />
-              )}
+              {/* Loading State */}
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  {/* Step Content */}
+                  {currentStep === 1 && (
+                    <ServiceSelector
+                      services={services}
+                      selectedId={watchedValues.serviceId}
+                      onSelect={(id) => form.setValue("serviceId", id)}
+                    />
+                  )}
 
-              {currentStep === 2 && (
-                <BarberSelector
-                  barbers={mockBarbers}
-                  selectedId={watchedValues.barberId || ""}
-                  onSelect={(id) => form.setValue("barberId", id)}
-                />
-              )}
+                  {currentStep === 2 && (
+                    <BarberSelector
+                      barbers={barbers}
+                      selectedId={watchedValues.barberId || ""}
+                      onSelect={(id) => form.setValue("barberId", id)}
+                    />
+                  )}
 
-              {currentStep === 3 && (
-                <DateTimePicker
-                  selectedDate={watchedValues.date}
-                  selectedTime={watchedValues.timeSlot}
-                  timeSlots={mockTimeSlots}
-                  onDateSelect={(date) => form.setValue("date", date as Date)}
-                  onTimeSelect={(time) => form.setValue("timeSlot", time)}
-                />
-              )}
+                  {currentStep === 3 && (
+                    <DateTimePicker
+                      selectedDate={watchedValues.date}
+                      selectedTime={watchedValues.timeSlot}
+                      timeSlots={timeSlots}
+                      onDateSelect={(date) => form.setValue("date", date as Date)}
+                      onTimeSelect={(time) => form.setValue("timeSlot", time)}
+                      loading={loadingSlots}
+                    />
+                  )}
 
-              {currentStep === 4 && <CustomerInfoForm form={form} />}
+                  {currentStep === 4 && <CustomerInfoForm form={form} />}
 
-              {currentStep === 5 && (
-                <BookingSummary
-                  service={selectedService}
-                  barber={selectedBarber}
-                  date={watchedValues.date}
-                  time={watchedValues.timeSlot}
-                  customerName={watchedValues.customerName}
-                  customerEmail={watchedValues.customerEmail}
-                  customerPhone={watchedValues.customerPhone}
-                  notes={watchedValues.notes || ""}
-                />
-              )}
+                  {currentStep === 5 && (
+                    <BookingSummary
+                      service={selectedService}
+                      barber={selectedBarber}
+                      date={watchedValues.date}
+                      time={watchedValues.timeSlot}
+                      customerName={watchedValues.customerName}
+                      customerEmail={watchedValues.customerEmail}
+                      customerPhone={watchedValues.customerPhone}
+                      notes={watchedValues.notes || ""}
+                    />
+                  )}
 
-              {/* Navigation */}
-              <div className="flex justify-between mt-8 pt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={currentStep === 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
+                  {/* Navigation */}
+                  <div className="flex justify-between mt-8 pt-6 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleBack}
+                      disabled={currentStep === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
 
-                {currentStep < steps.length ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={!canProceed()}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Booking...
-                      </>
+                    {currentStep < steps.length ? (
+                      <Button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={!canProceed()}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
                     ) : (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Confirm Booking
-                      </>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Booking...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Confirm Booking
+                          </>
+                        )}
+                      </Button>
                     )}
-                  </Button>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </form>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -8,66 +11,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Scissors, Clock, DollarSign } from "lucide-react";
-
-const services = [
-  {
-    id: 1,
-    name: "Classic Haircut",
-    description:
-      "Traditional haircut with precision cutting and styling. Includes wash and blow dry.",
-    duration: 30,
-    price: 25,
-    icon: Scissors,
-  },
-  {
-    id: 2,
-    name: "Beard Trim",
-    description:
-      "Expert beard shaping and trimming to maintain your perfect look.",
-    duration: 20,
-    price: 15,
-    icon: Scissors,
-  },
-  {
-    id: 3,
-    name: "Haircut & Beard",
-    description:
-      "Complete grooming package with haircut and beard trim combo.",
-    duration: 45,
-    price: 35,
-    icon: Scissors,
-  },
-  {
-    id: 4,
-    name: "Hot Towel Shave",
-    description:
-      "Luxurious traditional hot towel shave for the smoothest finish.",
-    duration: 30,
-    price: 30,
-    icon: Scissors,
-  },
-  {
-    id: 5,
-    name: "Kids Haircut",
-    description:
-      "Gentle and patient haircuts for children under 12 years old.",
-    duration: 20,
-    price: 18,
-    icon: Scissors,
-  },
-  {
-    id: 6,
-    name: "Premium Package",
-    description:
-      "Full service including haircut, beard trim, hot towel, and styling.",
-    duration: 60,
-    price: 55,
-    icon: Scissors,
-  },
-];
+import { Scissors, Clock, DollarSign, Loader2 } from "lucide-react";
+import type { Service } from "@/types";
 
 export function ServicesSection() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const response = await fetch("/api/services");
+        if (response.ok) {
+          const data = await response.json();
+          setServices(data);
+        }
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchServices();
+  }, []);
+
   return (
     <section id="services" className="py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -80,42 +47,53 @@ export function ServicesSection() {
           </p>
         </div>
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service) => (
-            <Card
-              key={service.id}
-              className="group hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <service.icon className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>{service.name}</CardTitle>
-                <CardDescription>{service.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{service.duration} min</span>
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : services.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No services available at the moment.
+          </div>
+        ) : (
+          /* Services Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((service) => (
+              <Card
+                key={service.id}
+                className="group hover:shadow-lg transition-shadow"
+              >
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Scissors className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>${service.price}</span>
+                  <CardTitle>{service.name}</CardTitle>
+                  <CardDescription>{service.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{service.duration} min</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-4 w-4" />
+                      <span>${Number(service.price).toFixed(2)}</span>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Link href={`/booking?service=${service.id}`} className="w-full">
-                  <Button variant="outline" className="w-full">
-                    Book Now
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+                <CardFooter>
+                  <Link href={`/booking?service=${service.id}`} className="w-full">
+                    <Button variant="outline" className="w-full">
+                      Book Now
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

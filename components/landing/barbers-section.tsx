@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -6,48 +9,38 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FaInstagram, FaTwitter } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
+import type { Barber } from "@/types";
 
-const barbers = [
-  {
-    id: 1,
-    name: "James Wilson",
-    role: "Master Barber",
-    bio: "15 years of experience specializing in classic cuts and hot towel shaves.",
-    specialties: ["Classic Cuts", "Hot Towel Shave", "Beard Styling"],
-    image: "/images/barbers/james.jpg",
-    initials: "JW",
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    role: "Senior Barber",
-    bio: "Expert in modern fades and creative designs. Award-winning stylist.",
-    specialties: ["Fades", "Hair Design", "Color"],
-    image: "/images/barbers/michael.jpg",
-    initials: "MC",
-  },
-  {
-    id: 3,
-    name: "David Rodriguez",
-    role: "Barber",
-    bio: "Passionate about precision cuts and making every client look their best.",
-    specialties: ["Precision Cuts", "Kids Haircuts", "Beard Trim"],
-    image: "/images/barbers/david.jpg",
-    initials: "DR",
-  },
-  {
-    id: 4,
-    name: "Alex Thompson",
-    role: "Barber",
-    bio: "Bringing fresh perspectives and the latest trends to traditional barbering.",
-    specialties: ["Trendy Styles", "Texture", "Styling"],
-    image: "/images/barbers/alex.jpg",
-    initials: "AT",
-  },
-];
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
 
 export function BarbersSection() {
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBarbers() {
+      try {
+        const response = await fetch("/api/barbers");
+        if (response.ok) {
+          const data = await response.json();
+          setBarbers(data);
+        }
+      } catch (error) {
+        console.error("Error fetching barbers:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBarbers();
+  }, []);
+
   return (
     <section id="barbers" className="py-20">
       <div className="container mx-auto px-4">
@@ -61,54 +54,53 @@ export function BarbersSection() {
           </p>
         </div>
 
-        {/* Barbers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {barbers.map((barber) => (
-            <Card key={barber.id} className="text-center">
-              <CardHeader>
-                <Avatar className="w-24 h-24 mx-auto mb-4">
-                  <AvatarImage src={barber.image} alt={barber.name} />
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                    {barber.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle>{barber.name}</CardTitle>
-                <CardDescription className="text-primary font-medium">
-                  {barber.role}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{barber.bio}</p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {barber.specialties.map((specialty) => (
-                    <span
-                      key={specialty}
-                      className="text-xs px-2 py-1 bg-secondary rounded-full"
-                    >
-                      {specialty}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex justify-center gap-4 pt-2">
-                  <a
-                    href="#"
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                    aria-label={`${barber.name} Instagram`}
-                  >
-                    <FaInstagram className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="#"
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                    aria-label={`${barber.name} Twitter`}
-                  >
-                    <FaTwitter className="h-5 w-5" />
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : barbers.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No barbers available at the moment.
+          </div>
+        ) : (
+          /* Barbers Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {barbers.map((barber) => (
+              <Card key={barber.id} className="text-center">
+                <CardHeader>
+                  <Avatar className="w-24 h-24 mx-auto mb-4">
+                    <AvatarImage src={barber.imageUrl || ""} alt={barber.name} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {getInitials(barber.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <CardTitle>{barber.name}</CardTitle>
+                  <CardDescription className="text-primary font-medium">
+                    Barber
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {barber.bio && (
+                    <p className="text-sm text-muted-foreground">{barber.bio}</p>
+                  )}
+                  {barber.specialties.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {barber.specialties.map((specialty) => (
+                        <span
+                          key={specialty}
+                          className="text-xs px-2 py-1 bg-secondary rounded-full"
+                        >
+                          {specialty}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

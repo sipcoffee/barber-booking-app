@@ -1,7 +1,98 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Loader2 } from "lucide-react";
+import type { ShopSettings } from "@/types";
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function formatTime(time: string): string {
+  const [hours, minutes] = time.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
 
 export function LocationSection() {
+  const [settings, setSettings] = useState<ShopSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const response = await fetch("/api/shop-settings");
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
+      } catch (error) {
+        console.error("Error fetching shop settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSettings();
+  }, []);
+
+  // Generate business hours display
+  const getBusinessHours = () => {
+    if (!settings) return [];
+
+    const closedDays = new Set(settings.closedDays);
+    const openTime = formatTime(settings.openTime);
+    const closeTime = formatTime(settings.closeTime);
+
+    // Group consecutive days with same hours
+    const weekdays = [1, 2, 3, 4, 5]; // Mon-Fri
+    const saturday = 6;
+    const sunday = 0;
+
+    const hours: { days: string; hours: string; closed?: boolean }[] = [];
+
+    // Check weekdays
+    const openWeekdays = weekdays.filter((d) => !closedDays.has(d));
+    if (openWeekdays.length === 5) {
+      hours.push({ days: "Monday - Friday", hours: `${openTime} - ${closeTime}` });
+    } else if (openWeekdays.length > 0) {
+      hours.push({
+        days: openWeekdays.map((d) => DAYS[d]).join(", "),
+        hours: `${openTime} - ${closeTime}`,
+      });
+    }
+
+    // Saturday
+    if (!closedDays.has(saturday)) {
+      hours.push({ days: "Saturday", hours: `${openTime} - ${closeTime}` });
+    } else {
+      hours.push({ days: "Saturday", hours: "Closed", closed: true });
+    }
+
+    // Sunday
+    if (!closedDays.has(sunday)) {
+      hours.push({ days: "Sunday", hours: `${openTime} - ${closeTime}` });
+    } else {
+      hours.push({ days: "Sunday", hours: "Closed", closed: true });
+    }
+
+    return hours;
+  };
+
+  if (loading) {
+    return (
+      <section id="contact" className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const businessHours = getBusinessHours();
+
   return (
     <section id="contact" className="py-20">
       <div className="container mx-auto px-4">
@@ -36,12 +127,8 @@ export function LocationSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  123 Main Street
-                  <br />
-                  Downtown District
-                  <br />
-                  City, State 12345
+                <p className="text-muted-foreground whitespace-pre-line">
+                  {settings?.address || "123 Main Street\nDowntown District\nCity, State 12345"}
                 </p>
               </CardContent>
             </Card>
@@ -55,18 +142,14 @@ export function LocationSection() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-muted-foreground">
-                  <div className="flex justify-between">
-                    <span>Monday - Friday</span>
-                    <span>9:00 AM - 8:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Saturday</span>
-                    <span>9:00 AM - 6:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sunday</span>
-                    <span className="text-destructive">Closed</span>
-                  </div>
+                  {businessHours.map((item) => (
+                    <div key={item.days} className="flex justify-between">
+                      <span>{item.days}</span>
+                      <span className={item.closed ? "text-destructive" : ""}>
+                        {item.hours}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -81,10 +164,10 @@ export function LocationSection() {
                 </CardHeader>
                 <CardContent>
                   <a
-                    href="tel:+15551234567"
+                    href={`tel:${settings?.phone?.replace(/[^0-9+]/g, "") || "+15551234567"}`}
                     className="text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    (555) 123-4567
+                    {settings?.phone || "(555) 123-4567"}
                   </a>
                 </CardContent>
               </Card>
@@ -98,10 +181,10 @@ export function LocationSection() {
                 </CardHeader>
                 <CardContent>
                   <a
-                    href="mailto:info@barbershop.com"
+                    href={`mailto:${settings?.email || "info@barbershop.com"}`}
                     className="text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    info@barbershop.com
+                    {settings?.email || "info@barbershop.com"}
                   </a>
                 </CardContent>
               </Card>
