@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Appointment } from "@/types";
+import { useBookings, updateBookingStatus, deleteBooking } from "@/lib/swr";
 
 const statusColors: Record<string, string> = {
   PENDING:
@@ -63,49 +63,19 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 export function AppointmentsTab() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchAppointments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "all") {
-        params.append("status", statusFilter);
-      }
-      if (date) {
-        params.append("date", format(date, "yyyy-MM-dd"));
-      }
-
-      const response = await fetch(`/api/bookings?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch appointments");
-      const data = await response.json();
-      setAppointments(data);
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-      toast.error("Failed to load appointments");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, date]);
-
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+  const { bookings, isLoading } = useBookings({
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    date: date ? format(date, "yyyy-MM-dd") : undefined,
+  });
 
   const handleConfirm = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "CONFIRMED" }),
-      });
-      if (!response.ok) throw new Error("Failed to confirm appointment");
+      await updateBookingStatus(id, "CONFIRMED");
       toast.success("Appointment confirmed");
-      fetchAppointments();
     } catch (error) {
       console.error("Error confirming appointment:", error);
       toast.error("Failed to confirm appointment");
@@ -114,12 +84,8 @@ export function AppointmentsTab() {
 
   const handleCancel = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to cancel appointment");
+      await deleteBooking(id);
       toast.success("Appointment cancelled");
-      fetchAppointments();
     } catch (error) {
       console.error("Error cancelling appointment:", error);
       toast.error("Failed to cancel appointment");
@@ -128,14 +94,8 @@ export function AppointmentsTab() {
 
   const handleComplete = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "COMPLETED" }),
-      });
-      if (!response.ok) throw new Error("Failed to complete appointment");
+      await updateBookingStatus(id, "COMPLETED");
       toast.success("Appointment marked as completed");
-      fetchAppointments();
     } catch (error) {
       console.error("Error completing appointment:", error);
       toast.error("Failed to complete appointment");
@@ -144,36 +104,32 @@ export function AppointmentsTab() {
 
   const handleNoShow = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookings/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "NO_SHOW" }),
-      });
-      if (!response.ok) throw new Error("Failed to mark as no-show");
+      await updateBookingStatus(id, "NO_SHOW");
       toast.success("Appointment marked as no-show");
-      fetchAppointments();
     } catch (error) {
       console.error("Error marking no-show:", error);
       toast.error("Failed to mark as no-show");
     }
   };
 
-  const filteredAppointments = appointments.filter((apt) => {
-    const matchesSearch =
-      apt.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.service?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredAppointments = useMemo(() => {
+    return bookings.filter((apt) => {
+      const matchesSearch =
+        apt.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.service?.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+  }, [bookings, searchQuery]);
 
   const formatTime = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return format(date, "h:mm a");
+    const d = new Date(dateString);
+    return format(d, "h:mm a");
   };
 
   const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    return format(date, "MMM d, yyyy");
+    const d = new Date(dateString);
+    return format(d, "MMM d, yyyy");
   };
 
   return (
@@ -242,7 +198,7 @@ export function AppointmentsTab() {
           </div>
 
           {/* Appointments List */}
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>

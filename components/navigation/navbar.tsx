@@ -42,11 +42,6 @@ export function Navbar() {
 
         {/* CTA Button */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/login">
-            <Button variant="ghost" size="sm">
-              Admin
-            </Button>
-          </Link>
           <Link href="/booking">
             <Button size="sm">Book Now</Button>
           </Link>
@@ -81,11 +76,6 @@ export function Navbar() {
             </Link>
           ))}
           <div className="flex flex-col gap-2 pt-4 border-t">
-            <Link href="/login" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" className="w-full">
-                Admin
-              </Button>
-            </Link>
             <Link href="/booking" onClick={() => setIsOpen(false)}>
               <Button className="w-full">Book Now</Button>
             </Link>

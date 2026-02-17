@@ -20,11 +20,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Save, Store, Clock, Mail, Loader2 } from "lucide-react";
-import type { ShopSettings } from "@/types";
+import { useShopSettings, updateShopSettings } from "@/lib/swr";
 
 export function SettingsTab() {
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { settings, isLoading } = useShopSettings();
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -37,54 +36,33 @@ export function SettingsTab() {
   const [slotDuration, setSlotDuration] = useState("30");
   const [closedDays, setClosedDays] = useState<number[]>([0]);
 
+  // Sync form state when settings load
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch("/api/shop-settings");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      const data: ShopSettings = await response.json();
-      setSettings(data);
-      setShopName(data.shopName);
-      setPhone(data.phone);
-      setEmail(data.email);
-      setAddress(data.address);
-      setOpenTime(data.openTime);
-      setCloseTime(data.closeTime);
-      setSlotDuration(data.slotDuration.toString());
-      setClosedDays(data.closedDays);
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-      toast.error("Failed to load settings");
-    } finally {
-      setLoading(false);
+    if (settings) {
+      setShopName(settings.shopName);
+      setPhone(settings.phone);
+      setEmail(settings.email);
+      setAddress(settings.address);
+      setOpenTime(settings.openTime);
+      setCloseTime(settings.closeTime);
+      setSlotDuration(settings.slotDuration.toString());
+      setClosedDays(settings.closedDays);
     }
-  };
+  }, [settings]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch("/api/shop-settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shopName,
-          phone,
-          email,
-          address,
-          openTime,
-          closeTime,
-          slotDuration: parseInt(slotDuration),
-          closedDays,
-        }),
+      await updateShopSettings({
+        shopName,
+        phone,
+        email,
+        address,
+        openTime,
+        closeTime,
+        slotDuration: parseInt(slotDuration),
+        closedDays,
       });
-
-      if (!response.ok) throw new Error("Failed to save settings");
-
-      const data: ShopSettings = await response.json();
-      setSettings(data);
       toast.success("Settings saved successfully");
     } catch (error) {
       console.error("Error saving settings:", error);
@@ -102,7 +80,7 @@ export function SettingsTab() {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

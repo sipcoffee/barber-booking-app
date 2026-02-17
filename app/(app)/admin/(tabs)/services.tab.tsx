@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -24,11 +24,11 @@ import {
 import { Plus, Pencil, Trash2, Clock, DollarSign, Loader2 } from "lucide-react";
 import { formatPrice, formatDuration } from "@/lib/utils";
 import { toast } from "sonner";
+import { useServices, createService, updateService, deleteService } from "@/lib/swr";
 import type { Service } from "@/types";
 
 export function ServicesTab() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { services, isLoading } = useServices();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [saving, setSaving] = useState(false);
@@ -39,31 +39,9 @@ export function ServicesTab() {
   const durationRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const fetchServices = async () => {
-    try {
-      const response = await fetch("/api/services");
-      if (!response.ok) throw new Error("Failed to fetch services");
-      const data = await response.json();
-      setServices(data);
-    } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error("Failed to load services");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/services/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete service");
-      setServices(services.filter((s) => s.id !== id));
+      await deleteService(id);
       toast.success("Service deleted successfully");
     } catch (error) {
       console.error("Error deleting service:", error);
@@ -83,7 +61,7 @@ export function ServicesTab() {
 
   const handleSave = async () => {
     const name = nameRef.current?.value;
-    const description = descriptionRef.current?.value;
+    const description = descriptionRef.current?.value || null;
     const duration = parseInt(durationRef.current?.value || "30");
     const price = parseFloat(priceRef.current?.value || "25");
 
@@ -95,28 +73,17 @@ export function ServicesTab() {
     setSaving(true);
     try {
       if (editingService) {
-        // Update existing service
-        const response = await fetch(`/api/services/${editingService.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, description, duration, price }),
-        });
-        if (!response.ok) throw new Error("Failed to update service");
-        const updatedService = await response.json();
-        setServices(
-          services.map((s) => (s.id === editingService.id ? updatedService : s))
-        );
+        await updateService(editingService.id, { name, description, duration, price });
         toast.success("Service updated successfully");
       } else {
-        // Create new service
-        const response = await fetch("/api/services", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, description, duration, price }),
+        await createService({
+          name,
+          description,
+          duration,
+          price,
+          imageUrl: null,
+          isActive: true,
         });
-        if (!response.ok) throw new Error("Failed to create service");
-        const newService = await response.json();
-        setServices([...services, newService]);
         toast.success("Service added successfully");
       }
       setIsDialogOpen(false);
@@ -130,7 +97,7 @@ export function ServicesTab() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

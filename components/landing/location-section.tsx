@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock, Loader2 } from "lucide-react";
-import type { ShopSettings } from "@/types";
+import { useShopSettings } from "@/lib/swr";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -16,25 +15,7 @@ function formatTime(time: string): string {
 }
 
 export function LocationSection() {
-  const [settings, setSettings] = useState<ShopSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const response = await fetch("/api/shop-settings");
-        if (response.ok) {
-          const data = await response.json();
-          setSettings(data);
-        }
-      } catch (error) {
-        console.error("Error fetching shop settings:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSettings();
-  }, []);
+  const { settings, isLoading } = useShopSettings();
 
   // Generate business hours display
   const getBusinessHours = () => {
@@ -79,7 +60,7 @@ export function LocationSection() {
     return hours;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section id="contact" className="py-20">
         <div className="container mx-auto px-4">

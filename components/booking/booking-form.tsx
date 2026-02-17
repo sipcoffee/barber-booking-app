@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,6 @@ import {
   bookingFormSchema,
   type BookingFormValues,
 } from "@/lib/validations/booking";
-import type { Service, Barber, TimeSlot } from "@/types";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -27,6 +26,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import {
+  useServices,
+  useBarbers,
+  useAvailableSlots,
+  createBooking,
+} from "@/lib/swr";
 
 const steps = [
   { id: 1, name: "Service", description: "Choose your service" },
@@ -44,13 +49,9 @@ export function BookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  // Data from API
-  const [services, setServices] = useState<Service[]>([]);
-  const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [loadingServices, setLoadingServices] = useState(true);
-  const [loadingBarbers, setLoadingBarbers] = useState(true);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  // Data from SWR hooks
+  const { services, isLoading: loadingServices } = useServices();
+  const { barbers, isLoading: loadingBarbers } = useBarbers();
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
@@ -70,86 +71,29 @@ export function BookingForm() {
   const selectedService = services.find((s) => s.id === watchedValues.serviceId);
   const selectedBarber = barbers.find((b) => b.id === watchedValues.barberId);
 
-  // Fetch services on mount
+  // Prepare available slots query params
+  const slotsParams = useMemo(() => {
+    if (!watchedValues.date || !selectedService) return null;
+    return {
+      date: format(watchedValues.date, "yyyy-MM-dd"),
+      duration: selectedService.duration,
+      barberId: watchedValues.barberId || undefined,
+    };
+  }, [watchedValues.date, watchedValues.barberId, selectedService]);
+
+  const { slots: timeSlots, isLoading: loadingSlots } = useAvailableSlots(slotsParams);
+
+  // Clear selected time if it's no longer available
   useEffect(() => {
-    async function fetchServices() {
-      try {
-        const response = await fetch("/api/services");
-        if (response.ok) {
-          const data = await response.json();
-          setServices(data);
-        }
-      } catch (error) {
-        console.error("Error fetching services:", error);
-        toast.error("Failed to load services");
-      } finally {
-        setLoadingServices(false);
+    if (watchedValues.timeSlot && timeSlots.length > 0) {
+      const stillAvailable = timeSlots.find(
+        (s) => s.time === watchedValues.timeSlot && s.available
+      );
+      if (!stillAvailable) {
+        form.setValue("timeSlot", "");
       }
     }
-    fetchServices();
-  }, []);
-
-  // Fetch barbers on mount
-  useEffect(() => {
-    async function fetchBarbers() {
-      try {
-        const response = await fetch("/api/barbers");
-        if (response.ok) {
-          const data = await response.json();
-          setBarbers(data);
-        }
-      } catch (error) {
-        console.error("Error fetching barbers:", error);
-        toast.error("Failed to load barbers");
-      } finally {
-        setLoadingBarbers(false);
-      }
-    }
-    fetchBarbers();
-  }, []);
-
-  // Fetch available time slots when date or barber changes
-  const fetchTimeSlots = useCallback(async () => {
-    const date = watchedValues.date;
-    if (!date || !selectedService) return;
-
-    setLoadingSlots(true);
-    try {
-      const params = new URLSearchParams({
-        date: format(date, "yyyy-MM-dd"),
-        duration: selectedService.duration.toString(),
-      });
-      if (watchedValues.barberId) {
-        params.append("barberId", watchedValues.barberId);
-      }
-
-      const response = await fetch(`/api/available-slots?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTimeSlots(data.slots || []);
-        // Clear selected time if it's no longer available
-        if (watchedValues.timeSlot) {
-          const stillAvailable = data.slots?.find(
-            (s: TimeSlot) => s.time === watchedValues.timeSlot && s.available
-          );
-          if (!stillAvailable) {
-            form.setValue("timeSlot", "");
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching time slots:", error);
-      toast.error("Failed to load available times");
-    } finally {
-      setLoadingSlots(false);
-    }
-  }, [watchedValues.date, watchedValues.barberId, watchedValues.timeSlot, selectedService, form]);
-
-  useEffect(() => {
-    if (watchedValues.date && selectedService) {
-      fetchTimeSlots();
-    }
-  }, [watchedValues.date, watchedValues.barberId, selectedService, fetchTimeSlots]);
+  }, [timeSlots, watchedValues.timeSlot, form]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -187,25 +131,16 @@ export function BookingForm() {
   const onSubmit = async (data: BookingFormValues) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          serviceId: data.serviceId,
-          barberId: data.barberId || undefined,
-          date: data.date ? format(data.date, "yyyy-MM-dd") : undefined,
-          timeSlot: data.timeSlot,
-          customerName: data.customerName,
-          customerEmail: data.customerEmail,
-          customerPhone: data.customerPhone,
-          notes: data.notes,
-        }),
+      await createBooking({
+        serviceId: data.serviceId,
+        barberId: data.barberId || undefined,
+        date: data.date ? format(data.date, "yyyy-MM-dd") : "",
+        timeSlot: data.timeSlot,
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        notes: data.notes,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to book appointment");
-      }
 
       setIsComplete(true);
       toast.success("Appointment booked successfully!", {

@@ -7,12 +7,27 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const date = searchParams.get("date");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
     const barberId = searchParams.get("barberId");
 
     // Build date filter if provided
     let dateFilter = {};
-    if (date) {
-      // Parse the date string and create start/end of day boundaries
+    if (startDate && endDate) {
+      // Date range filter
+      const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+      const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+      const rangeStart = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+      const rangeEnd = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999);
+
+      dateFilter = {
+        date: {
+          gte: rangeStart,
+          lte: rangeEnd,
+        },
+      };
+    } else if (date) {
+      // Single date filter (backwards compatible)
       const [year, month, day] = date.split("-").map(Number);
       const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
       const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);

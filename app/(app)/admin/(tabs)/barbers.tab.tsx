@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Mail, Phone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useBarbers, createBarber, updateBarber, deleteBarber } from "@/lib/swr";
 import type { Barber } from "@/types";
 
 function getInitials(name: string): string {
@@ -35,8 +36,7 @@ function getInitials(name: string): string {
 }
 
 export function BarbersTab() {
-  const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { barbers, isLoading } = useBarbers();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBarber, setEditingBarber] = useState<Barber | null>(null);
   const [saving, setSaving] = useState(false);
@@ -48,31 +48,9 @@ export function BarbersTab() {
   const bioRef = useRef<HTMLTextAreaElement>(null);
   const specialtiesRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchBarbers();
-  }, []);
-
-  const fetchBarbers = async () => {
-    try {
-      const response = await fetch("/api/barbers");
-      if (!response.ok) throw new Error("Failed to fetch barbers");
-      const data = await response.json();
-      setBarbers(data);
-    } catch (error) {
-      console.error("Error fetching barbers:", error);
-      toast.error("Failed to load barbers");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/barbers/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete barber");
-      setBarbers(barbers.filter((b) => b.id !== id));
+      await deleteBarber(id);
       toast.success("Barber removed successfully");
     } catch (error) {
       console.error("Error deleting barber:", error);
@@ -109,28 +87,18 @@ export function BarbersTab() {
     setSaving(true);
     try {
       if (editingBarber) {
-        // Update existing barber
-        const response = await fetch(`/api/barbers/${editingBarber.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, phone, bio, specialties }),
-        });
-        if (!response.ok) throw new Error("Failed to update barber");
-        const updatedBarber = await response.json();
-        setBarbers(
-          barbers.map((b) => (b.id === editingBarber.id ? updatedBarber : b))
-        );
+        await updateBarber(editingBarber.id, { name, email, phone, bio, specialties });
         toast.success("Barber updated successfully");
       } else {
-        // Create new barber
-        const response = await fetch("/api/barbers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, phone, bio, specialties }),
+        await createBarber({
+          name,
+          email,
+          phone,
+          bio,
+          specialties,
+          imageUrl: null,
+          isActive: true,
         });
-        if (!response.ok) throw new Error("Failed to create barber");
-        const newBarber = await response.json();
-        setBarbers([...barbers, newBarber]);
         toast.success("Barber added successfully");
       }
       setIsDialogOpen(false);
@@ -144,7 +112,7 @@ export function BarbersTab() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

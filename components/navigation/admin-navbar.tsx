@@ -62,22 +62,6 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
           </span>
         </Link>
 
-        {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View Site
-          </Link>
-        </nav>
-
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
-import type { Barber } from "@/types";
+import { useBarbers } from "@/lib/swr";
 
 function getInitials(name: string): string {
   return name
@@ -21,25 +20,7 @@ function getInitials(name: string): string {
 }
 
 export function BarbersSection() {
-  const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchBarbers() {
-      try {
-        const response = await fetch("/api/barbers");
-        if (response.ok) {
-          const data = await response.json();
-          setBarbers(data);
-        }
-      } catch (error) {
-        console.error("Error fetching barbers:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBarbers();
-  }, []);
+  const { barbers, isLoading } = useBarbers();
 
   return (
     <section id="barbers" className="py-20">
@@ -55,7 +36,7 @@ export function BarbersSection() {
         </div>
 
         {/* Loading State */}
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>

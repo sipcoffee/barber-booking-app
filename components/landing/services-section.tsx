@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -12,28 +11,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Scissors, Clock, DollarSign, Loader2 } from "lucide-react";
-import type { Service } from "@/types";
+import { useServices } from "@/lib/swr";
 
 export function ServicesSection() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchServices() {
-      try {
-        const response = await fetch("/api/services");
-        if (response.ok) {
-          const data = await response.json();
-          setServices(data);
-        }
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchServices();
-  }, []);
+  const { services, isLoading } = useServices();
 
   return (
     <section id="services" className="py-20 bg-secondary/30">
@@ -48,7 +29,7 @@ export function ServicesSection() {
         </div>
 
         {/* Loading State */}
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>

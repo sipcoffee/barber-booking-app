@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -12,38 +13,38 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 const galleryImages = [
   {
     id: 1,
-    src: "/images/gallery/shop-1.jpg",
-    alt: "Barber shop interior",
+    src: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=80",
+    alt: "Barber shop interior with vintage chairs",
     category: "Shop",
   },
   {
     id: 2,
-    src: "/images/gallery/cut-1.jpg",
-    alt: "Classic haircut",
+    src: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=80",
+    alt: "Classic haircut in progress",
     category: "Haircuts",
   },
   {
     id: 3,
-    src: "/images/gallery/beard-1.jpg",
-    alt: "Beard styling",
+    src: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&q=80",
+    alt: "Beard trimming and styling",
     category: "Beards",
   },
   {
     id: 4,
-    src: "/images/gallery/shop-2.jpg",
-    alt: "Barber chairs",
+    src: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80",
+    alt: "Barber working on client",
     category: "Shop",
   },
   {
     id: 5,
-    src: "/images/gallery/cut-2.jpg",
-    alt: "Modern fade",
+    src: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80",
+    alt: "Modern fade haircut",
     category: "Haircuts",
   },
   {
     id: 6,
-    src: "/images/gallery/cut-3.jpg",
-    alt: "Styling session",
+    src: "https://images.unsplash.com/photo-1596728325488-58c87691e9af?w=800&q=80",
+    alt: "Professional styling session",
     category: "Haircuts",
   },
 ];
@@ -73,15 +74,16 @@ export function GallerySection() {
               onClick={() => setSelectedImage(image)}
               className="relative aspect-square overflow-hidden rounded-lg group cursor-pointer"
             >
-              {/* Placeholder for actual images */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">
-                  {image.category}
-                </span>
-              </div>
+              <Image
+                src={image.src}
+                alt={image.alt}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                sizes="(max-width: 768px) 50vw, 33vw"
+              />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  View Image
+                  {image.category}
                 </span>
               </div>
             </button>
@@ -93,16 +95,21 @@ export function GallerySection() {
           open={!!selectedImage}
           onOpenChange={() => setSelectedImage(null)}
         >
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl p-0 overflow-hidden">
             <VisuallyHidden>
               <DialogTitle>{selectedImage?.alt}</DialogTitle>
               <DialogDescription>Gallery image preview</DialogDescription>
             </VisuallyHidden>
             {selectedImage && (
-              <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
-                <span className="text-muted-foreground">
-                  {selectedImage.alt}
-                </span>
+              <div className="relative aspect-video">
+                <Image
+                  src={selectedImage.src}
+                  alt={selectedImage.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                  priority
+                />
               </div>
             )}
           </DialogContent>
