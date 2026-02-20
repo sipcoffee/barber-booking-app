@@ -151,7 +151,7 @@ export function LoginForm() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="admin@barbershop.com"
+                      placeholder="admin@trim.com"
                       {...field}
                     />
                   </FormControl>

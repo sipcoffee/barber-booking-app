@@ -73,7 +73,7 @@ export function SignupForm() {
         });
       } else {
         toast.success("Account created", {
-          description: "Welcome to BarberShop admin!",
+          description: "Welcome to TRIM admin!",
         });
       }
     } catch (error) {
@@ -178,7 +178,7 @@ export function SignupForm() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="admin@barbershop.com"
+                      placeholder="admin@trim.com"
                       {...field}
                     />
                   </FormControl>
