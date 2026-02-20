@@ -259,7 +259,7 @@ export function BookingForm() {
 
       {/* Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div>
           <Card>
             <CardContent className="p-6">
               {/* Loading State */}
@@ -334,7 +334,11 @@ export function BookingForm() {
                         <ChevronRight className="h-4 w-4 ml-2" />
                       </Button>
                     ) : (
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => form.handleSubmit(onSubmit)()}
+                      >
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -353,7 +357,7 @@ export function BookingForm() {
               )}
             </CardContent>
           </Card>
-        </form>
+        </div>
       </Form>
     </div>
   );

@@ -16,6 +16,27 @@ interface DateTimePickerProps {
   loading?: boolean;
 }
 
+// Parse time string like "9:00 AM" or "1:30 PM" to get hour in 24-hour format
+function getHour24(time: string): number {
+  const isPM = time.toUpperCase().includes("PM");
+  const isAM = time.toUpperCase().includes("AM");
+  const timePart = time.replace(/\s*(AM|PM)\s*/i, "");
+  const hour = parseInt(timePart.split(":")[0]);
+
+  if (isPM && hour !== 12) {
+    return hour + 12;
+  }
+  if (isAM && hour === 12) {
+    return 0;
+  }
+  return hour;
+}
+
+// Format time for display (remove AM/PM)
+function formatTimeDisplay(time: string): string {
+  return time.replace(/\s*(AM|PM)\s*/i, "").trim();
+}
+
 export function DateTimePicker({
   selectedDate,
   selectedTime,
@@ -33,19 +54,19 @@ export function DateTimePicker({
     { dayOfWeek: [0] },
   ];
 
-  // Group time slots by morning/afternoon/evening
+  // Group time slots by morning/afternoon/evening using 24-hour conversion
   const morningSlots = timeSlots.filter((slot) => {
-    const hour = parseInt(slot.time.split(":")[0]);
+    const hour = getHour24(slot.time);
     return hour < 12;
   });
 
   const afternoonSlots = timeSlots.filter((slot) => {
-    const hour = parseInt(slot.time.split(":")[0]);
+    const hour = getHour24(slot.time);
     return hour >= 12 && hour < 17;
   });
 
   const eveningSlots = timeSlots.filter((slot) => {
-    const hour = parseInt(slot.time.split(":")[0]);
+    const hour = getHour24(slot.time);
     return hour >= 17;
   });
 
@@ -53,11 +74,11 @@ export function DateTimePicker({
     if (slots.length === 0) return null;
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {label}
         </span>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {slots.map((slot) => (
             <Button
               key={slot.time}
@@ -69,10 +90,11 @@ export function DateTimePicker({
               className={cn(
                 "h-10 text-sm font-medium transition-all",
                 !slot.available && "opacity-40 cursor-not-allowed line-through",
-                selectedTime === slot.time && "ring-2 ring-primary ring-offset-2"
+                selectedTime === slot.time &&
+                  "ring-2 ring-primary ring-offset-2",
               )}
             >
-              {slot.time}
+              {formatTimeDisplay(slot.time)}
             </Button>
           ))}
         </div>
@@ -91,32 +113,30 @@ export function DateTimePicker({
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Calendar Section */}
-        <div className="flex-shrink-0">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="space-y-3 shrink-0">
+          <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Pick a Date</span>
+            <span className="text-sm font-medium">Select Date</span>
           </div>
-          <div className="border rounded-lg p-2 bg-card">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={onDateSelect}
-              disabled={disabledDays}
-              className="rounded-md"
-            />
-          </div>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={onDateSelect}
+            disabled={disabledDays}
+            className="rounded-lg border w-fit"
+          />
         </div>
 
         {/* Time Slots Section */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="space-y-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Pick a Time</span>
+            <span className="text-sm font-medium">Select Time</span>
           </div>
 
-          <div className="border rounded-lg p-4 bg-card min-h-[280px]">
+          <div className="border rounded-lg p-4 bg-card h-[320px]">
             {selectedDate ? (
-              <div className="space-y-4">
+              <div className="space-y-4 h-full">
                 <div className="pb-3 border-b">
                   <p className="text-sm font-medium">
                     {format(selectedDate, "EEEE, MMMM d, yyyy")}
@@ -131,7 +151,7 @@ export function DateTimePicker({
                     </p>
                   </div>
                 ) : timeSlots.length > 0 ? (
-                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                  <div className="space-y-5 max-h-[230px] overflow-y-auto pr-2">
                     {renderTimeSlots(morningSlots, "Morning")}
                     {renderTimeSlots(afternoonSlots, "Afternoon")}
                     {renderTimeSlots(eveningSlots, "Evening")}
@@ -149,7 +169,7 @@ export function DateTimePicker({
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full py-12 gap-2 text-center">
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
                 <CalendarDays className="h-10 w-10 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">
                   Please select a date first
@@ -172,7 +192,8 @@ export function DateTimePicker({
           <div>
             <p className="text-sm font-medium">Your selected appointment</p>
             <p className="text-sm text-muted-foreground">
-              {format(selectedDate, "EEEE, MMMM d")} at {selectedTime}
+              {format(selectedDate, "EEEE, MMMM d")} at{" "}
+              {formatTimeDisplay(selectedTime)}
             </p>
           </div>
         </div>
