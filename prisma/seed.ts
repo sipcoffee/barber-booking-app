@@ -97,7 +97,7 @@ async function main() {
       create: {
         id: "barber_james",
         name: "James Wilson",
-        email: "james@barbershop.com",
+        email: "james@trim.com",
         phone: "(555) 111-2222",
         bio: "15 years of experience specializing in classic cuts and hot towel shaves.",
         specialties: ["Classic Cuts", "Hot Towel Shave", "Beard Styling"],
@@ -109,7 +109,7 @@ async function main() {
       create: {
         id: "barber_michael",
         name: "Michael Chen",
-        email: "michael@barbershop.com",
+        email: "michael@trim.com",
         phone: "(555) 222-3333",
         bio: "Expert in modern fades and creative designs. Award-winning stylist.",
         specialties: ["Fades", "Hair Design", "Color"],
@@ -121,7 +121,7 @@ async function main() {
       create: {
         id: "barber_david",
         name: "David Rodriguez",
-        email: "david@barbershop.com",
+        email: "david@trim.com",
         phone: "(555) 333-4444",
         bio: "Passionate about precision cuts and making every client look their best.",
         specialties: ["Precision Cuts", "Kids Haircuts", "Beard Trim"],
@@ -133,7 +133,7 @@ async function main() {
       create: {
         id: "barber_alex",
         name: "Alex Thompson",
-        email: "alex@barbershop.com",
+        email: "alex@trim.com",
         phone: "(555) 444-5555",
         bio: "Bringing fresh perspectives and the latest trends to traditional barbering.",
         specialties: ["Trendy Styles", "Texture", "Styling"],
@@ -190,10 +190,10 @@ async function main() {
     update: {},
     create: {
       id: "shop_main",
-      shopName: "BarberShop",
+      shopName: "TRIM",
       address: "123 Main Street, Downtown, City 12345",
       phone: "(555) 123-4567",
-      email: "info@barbershop.com",
+      email: "info@trim.com",
       openTime: "09:00",
       closeTime: "20:00",
       slotDuration: 30,
