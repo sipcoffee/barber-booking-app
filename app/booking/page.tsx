@@ -3,8 +3,8 @@ import { Footer } from "@/components/navigation/footer";
 import { BookingForm } from "@/components/booking/booking-form";
 
 export const metadata = {
-  title: "Book Appointment - BarberShop",
-  description: "Book your appointment online at BarberShop",
+  title: "Book Appointment - TRIM",
+  description: "Book your appointment online at TRIM",
 };
 
 export default function BookingPage() {

@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 const DEFAULT_SETTINGS = {
-  shopName: "BarberShop",
+  shopName: "TRIM",
   address: "123 Main Street, Downtown, City 12345",
   phone: "(555) 123-4567",
-  email: "info@barbershop.com",
+  email: "info@trim.com",
   openTime: "09:00",
   closeTime: "20:00",
   slotDuration: 30,

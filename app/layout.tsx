@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BarberShop - Premium Grooming Experience",
+  title: "TRIM - Premium Grooming Experience",
   description:
-    "Experience premium grooming services at our barber shop. Book your appointment online for haircuts, beard trims, and more.",
+    "Experience premium grooming services at TRIM. Book your appointment online for haircuts, beard trims, and more.",
 };
 
 export default function RootLayout({
