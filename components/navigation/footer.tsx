@@ -6,16 +6,16 @@ export function Footer() {
   return (
     <footer className="bg-secondary/50 border-t">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-24">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-4 ">
             <Link href="/" className="flex items-center gap-2">
               <Scissors className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">BarberShop</span>
+              <span className="font-bold text-xl">TRIM</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Premium grooming experience for the modern gentleman. Quality cuts,
-              expert care.
+              Premium grooming experience for the modern gentleman. Quality
+              cuts, expert care.
             </p>
             <div className="flex gap-4">
               <a
@@ -95,7 +95,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 shrink-0" />
-                <span>info@barbershop.com</span>
+                <span>info@trim.com</span>
               </li>
             </ul>
           </div>
@@ -117,7 +117,9 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} BarberShop. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} TRIM. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

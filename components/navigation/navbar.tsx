@@ -19,16 +19,16 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b px-4 md:px-24">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Scissors className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">BarberShop</span>
+          <span className="font-bold text-xl">TRIM</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-6 mr-8">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -61,7 +61,7 @@ export function Navbar() {
       <div
         className={cn(
           "md:hidden absolute top-16 left-0 right-0 bg-background border-b transition-all duration-300 overflow-hidden",
-          isOpen ? "max-h-96" : "max-h-0"
+          isOpen ? "max-h-96" : "max-h-0",
         )}
       >
         <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
