@@ -55,7 +55,7 @@ export function GallerySection() {
   >(null);
 
   return (
-    <section id="gallery" className="py-20 bg-secondary/30">
+    <section id="gallery" className="py-20 bg-secondary/30 px-4 md:px-24">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">

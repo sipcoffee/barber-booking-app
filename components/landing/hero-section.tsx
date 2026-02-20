@@ -30,7 +30,7 @@ export function HeroSection() {
 
           {/* Description */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Step into our barber shop and experience the art of traditional
+            Step into TRIM and experience the art of traditional
             grooming combined with modern techniques. Look sharp, feel confident.
           </p>
 

@@ -23,7 +23,7 @@ export function BarbersSection() {
   const { barbers, isLoading } = useBarbers();
 
   return (
-    <section id="barbers" className="py-20">
+    <section id="barbers" className="py-20 px-24">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
@@ -51,7 +51,10 @@ export function BarbersSection() {
               <Card key={barber.id} className="text-center">
                 <CardHeader>
                   <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={barber.imageUrl || ""} alt={barber.name} />
+                    <AvatarImage
+                      src={barber.imageUrl || ""}
+                      alt={barber.name}
+                    />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                       {getInitials(barber.name)}
                     </AvatarFallback>
@@ -63,7 +66,9 @@ export function BarbersSection() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {barber.bio && (
-                    <p className="text-sm text-muted-foreground">{barber.bio}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {barber.bio}
+                    </p>
                   )}
                   {barber.specialties.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2">

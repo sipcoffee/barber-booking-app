@@ -58,9 +58,7 @@ export function PricingSection() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Simple Pricing
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Pricing</h2>
           <p className="text-muted-foreground">
             Choose the package that suits your style. All services include our
             signature attention to detail.

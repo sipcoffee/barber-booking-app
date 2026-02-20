@@ -17,7 +17,7 @@ export function ServicesSection() {
   const { services, isLoading } = useServices();
 
   return (
-    <section id="services" className="py-20 bg-secondary/30">
+    <section id="services" className="py-20 bg-secondary/30 px-24">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
@@ -40,12 +40,12 @@ export function ServicesSection() {
         ) : (
           /* Services Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => (
+            {services.slice(0, 6).map((service) => (
               <Card
                 key={service.id}
-                className="group hover:shadow-lg transition-shadow"
+                className="group hover:shadow-lg transition-shadow flex flex-col justify-between"
               >
-                <CardHeader>
+                <CardHeader className="grow">
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                     <Scissors className="h-6 w-6 text-primary" />
                   </div>
@@ -65,7 +65,10 @@ export function ServicesSection() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Link href={`/booking?service=${service.id}`} className="w-full">
+                  <Link
+                    href={`/booking?service=${service.id}`}
+                    className="w-full"
+                  >
                     <Button variant="outline" className="w-full">
                       Book Now
                     </Button>

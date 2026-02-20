@@ -162,10 +162,10 @@ export function LocationSection() {
                 </CardHeader>
                 <CardContent>
                   <a
-                    href={`mailto:${settings?.email || "info@barbershop.com"}`}
+                    href={`mailto:${settings?.email || "info@trim.com"}`}
                     className="text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {settings?.email || "info@barbershop.com"}
+                    {settings?.email || "info@trim.com"}
                   </a>
                 </CardContent>
               </Card>
