@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./(tabs)/overview.tab";
 import { AppointmentsTab } from "./(tabs)/appointments.tab";
@@ -13,6 +13,7 @@ import {
   Scissors,
   Users,
   Settings,
+  Loader2,
 } from "lucide-react";
 
 const tabs = [
@@ -25,13 +26,34 @@ const tabs = [
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage your TRIM appointments, services, and team
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Manage your barber shop appointments, services, and team
+          Manage your TRIM appointments, services, and team
         </p>
       </div>
 

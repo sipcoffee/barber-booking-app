@@ -98,7 +98,7 @@ export function SettingsTab() {
             <CardTitle>Shop Information</CardTitle>
           </div>
           <CardDescription>
-            Basic information about your barber shop
+            Basic information about your shop
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

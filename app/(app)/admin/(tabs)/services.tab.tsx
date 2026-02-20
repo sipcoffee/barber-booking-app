@@ -112,7 +112,7 @@ export function ServicesTab() {
           <div>
             <CardTitle>Services</CardTitle>
             <CardDescription>
-              Manage your barber shop services and pricing
+              Manage your services and pricing
             </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
