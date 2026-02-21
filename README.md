@@ -13,6 +13,13 @@
 </p>
 
 <p align="center">
+  <a href="https://barber-booking-app-a5kl.vercel.app/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=for-the-badge" alt="Live Demo" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://barber-booking-app-a5kl.vercel.app/">Live Demo</a> •
   <a href="#features">Features</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#getting-started">Getting Started</a> •
