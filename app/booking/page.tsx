@@ -1,11 +1,21 @@
+import { Suspense } from "react";
 import { Navbar } from "@/components/navigation/navbar";
 import { Footer } from "@/components/navigation/footer";
 import { BookingForm } from "@/components/booking/booking-form";
+import { Loader2 } from "lucide-react";
 
 export const metadata = {
   title: "Book Appointment - TRIM",
   description: "Book your appointment online at TRIM",
 };
+
+function BookingFormFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 export default function BookingPage() {
   return (
@@ -26,7 +36,9 @@ export default function BookingPage() {
             </div>
 
             {/* Booking Form */}
-            <BookingForm />
+            <Suspense fallback={<BookingFormFallback />}>
+              <BookingForm />
+            </Suspense>
           </div>
         </div>
       </main>
