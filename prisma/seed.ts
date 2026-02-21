@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma";
+import { hash } from "bcryptjs";
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });
@@ -10,6 +11,40 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
+
+  // ==================== ADMIN USER ====================
+  // Set these via environment variables or change defaults
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@trim.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "Admin123!";
+  const adminName = process.env.ADMIN_NAME || "Admin";
+
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
+
+  if (!existingAdmin) {
+    // Hash password (better-auth uses bcrypt with 10 rounds)
+    const hashedPassword = await hash(adminPassword, 10);
+
+    await prisma.user.create({
+      data: {
+        name: adminName,
+        email: adminEmail,
+        emailVerified: true,
+        role: "ADMIN",
+        accounts: {
+          create: {
+            providerId: "credential",
+            accountId: adminEmail,
+            password: hashedPassword,
+          },
+        },
+      },
+    });
+    console.log(`Admin user created: ${adminEmail}`);
+  } else {
+    console.log(`Admin user already exists: ${adminEmail}`);
+  }
 
   // Create services
   const services = await Promise.all([

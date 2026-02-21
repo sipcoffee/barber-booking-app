@@ -1,4 +1,4 @@
-import { SignupForm } from "@/components/signup-form";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Sign Up - TRIM Admin",
@@ -6,5 +6,6 @@ export const metadata = {
 };
 
 export default function SignupPage() {
-  return <SignupForm />;
+  // Signup is disabled - redirect to login
+  redirect("/login");
 }

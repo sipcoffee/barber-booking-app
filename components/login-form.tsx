@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,8 +23,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Loader2, Scissors } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,7 +35,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSocialLoading, setIsSocialLoading] = useState<string | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -71,21 +67,6 @@ export function LoginForm() {
     }
   };
 
-  const handleSocialLogin = async (provider: "github" | "google") => {
-    setIsSocialLoading(provider);
-    try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL: "/admin",
-      });
-    } catch (error) {
-      toast.error("Login failed", {
-        description: `Failed to sign in with ${provider}`,
-      });
-      setIsSocialLoading(null);
-    }
-  };
-
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
@@ -100,46 +81,6 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Social Login */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            onClick={() => handleSocialLogin("github")}
-            disabled={!!isSocialLoading}
-          >
-            {isSocialLoading === "github" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FaGithub className="h-4 w-4 mr-2" />
-            )}
-            GitHub
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleSocialLogin("google")}
-            disabled={!!isSocialLoading}
-          >
-            {isSocialLoading === "google" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FaGoogle className="h-4 w-4 mr-2" />
-            )}
-            Google
-          </Button>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        {/* Email Login */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -187,10 +128,7 @@ export function LoginForm() {
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
-            Sign up
-          </Link>
+          Contact an administrator for account access
         </p>
       </CardFooter>
     </Card>
