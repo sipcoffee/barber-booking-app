@@ -64,6 +64,7 @@ export function SignupForm() {
         name: data.name,
         email: data.email,
         password: data.password,
+        role: "ADMIN",
         callbackURL: "/admin",
       });
 
