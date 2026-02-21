@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
+import { hash, compare } from "bcryptjs";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -8,6 +9,10 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    password: {
+      hash: (password) => hash(password, 10),
+      verify: ({ password, hash: hashedPassword }) => compare(password, hashedPassword),
+    },
   },
   socialProviders: {
     github: {
